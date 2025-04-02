@@ -1,24 +1,46 @@
-from random import randint
-from random import random
+from random import randint, random
 from math import exp
 
 class Requete:
+    def __init__(self, temps_arrivee, categorie):
+        self.temps = temps_arrivee      # temps d'arrivée dans le système
+        self.categorie = categorie      # catégorie de la requête (1 à nbCat)
+        self.temps_debut_traitement = None
+        self.temps_fin_traitement = None
+        self.perdue = False
 
-    def __init__(self, temps, categorie):
-        self.temps = temps
-        self.categorie = categorie
+    def definir_debut_traitement(self, temps):
+        self.temps_debut_traitement = temps
 
-# Renvoie le temps d'arrivée de la prochaine requête et sa catégorie,
-#  donnée respetivement selon la loi exponentielle et la loi uniforme
-def nouvelleRequete(nbCategories, _lambda, temps):
-    categorie = randint(1, nbCategories)
+    def definir_fin_traitement(self, temps):
+        self.temps_fin_traitement = temps
+
+    def marquer_comme_perdue(self):
+        self.perdue = True
+
+    def est_terminee(self):
+        return self.temps_fin_traitement is not None
+
+    def temps_reponse(self):
+        if self.temps_fin_traitement is None:
+            return None
+        return self.temps_fin_traitement - self.temps
+
+def nouvelle_requete(nb_categories, _lambda, temps_actuel):
+    categorie = randint(1, nb_categories)  # loi uniforme discrète
     x = random()
-    t = 1/ (_lambda / exp(-_lambda * x))
-    return Requete(t + temps, categorie)
+    inter_arrivee = 1 / (_lambda / exp(-_lambda * x))  # loi exponentielle "maison"
+    temps_arrivee = temps_actuel + inter_arrivee
+    return Requete(temps_arrivee, categorie)
 
-def tester_nouvelle_requete(nbCat, _lambda):
+
+def tester_nouvelle_requete(nb_categories, _lambda):
     t = 0
-    for _ in range(0, 50):
-        r = nouvelleRequete(nbCat, _lambda, t)
-        t = r.temps
-        print("requete cat=" + str(r.categorie) + " t=" + str(r.temps))
+    for i in range(50):
+        requete = nouvelle_requete(nb_categories, _lambda, t)
+        t = requete.temps
+        print(f"Requête {i+1} - Catégorie: {requete.categorie} | Temps d'arrivée: {requete.temps:.4f}")
+
+# Pour tester directement ce fichier
+if __name__ == "__main__":
+    tester_nouvelle_requete(nb_categories=3, _lambda=1.2)
