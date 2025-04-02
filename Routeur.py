@@ -1,5 +1,5 @@
 from collections import deque
-from Requete import Requete
+from Requete import Requete, nouvelle_requete
 from ServerGroup import GroupeServeurs
 
 class Routeur:
@@ -47,3 +47,7 @@ class Routeur:
         if total == 0:
             return 0.0
         return self.requetes_perdues / total
+    
+    def temps_reponses(self):
+        return [r.temps_reponse() for r in self.requetes if r.est_terminee()]
+

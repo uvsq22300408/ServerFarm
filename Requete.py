@@ -3,8 +3,8 @@ from math import exp
 
 class Requete:
     def __init__(self, temps_arrivee, categorie):
-        self.temps = temps_arrivee      # temps d'arrivée dans le système
-        self.categorie = categorie      # catégorie de la requête (1 à nbCat)
+        self.temps = temps_arrivee      # Temps d'arrivée dans le système
+        self.categorie = categorie      # Catégorie de la requête (1 à nbCat)
         self.temps_debut_traitement = None
         self.temps_fin_traitement = None
         self.perdue = False
@@ -27,20 +27,19 @@ class Requete:
         return self.temps_fin_traitement - self.temps
 
 def nouvelle_requete(nb_categories, _lambda, temps_actuel):
-    categorie = randint(1, nb_categories)  # loi uniforme discrète
+    categorie = randint(1, nb_categories)  # Catégorie entre 1 et nb_categories
     x = random()
-    inter_arrivee = 1 / (_lambda / exp(-_lambda * x))  # loi exponentielle "maison"
+    inter_arrivee = 1 / (_lambda / exp(-_lambda * x))  # Génère temps inter-arrivée
     temps_arrivee = temps_actuel + inter_arrivee
     return Requete(temps_arrivee, categorie)
-
 
 def tester_nouvelle_requete(nb_categories, _lambda):
     t = 0
     for i in range(50):
         requete = nouvelle_requete(nb_categories, _lambda, t)
         t = requete.temps
-        print(f"Requête {i+1} - Catégorie: {requete.categorie} | Temps d'arrivée: {requete.temps:.4f}")
+        print(f"Requête {i+1:02d} | Catégorie : {requete.categorie} | Temps d'arrivée : {requete.temps:.4f}")
 
-# Pour tester directement ce fichier
+# Si tu l’exécutes directement : test automatique
 if __name__ == "__main__":
     tester_nouvelle_requete(nb_categories=3, _lambda=1.2)
