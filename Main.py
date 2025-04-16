@@ -1,63 +1,64 @@
 from ServerGroup import ServerGroup
 from Routeur import Routeur
-from Requete import Requete, tester_nouvelle_requete, nouvelleRequete
+from Requete import Requete, tester_nouvelle_requete, nouvelle_requete
 from Event import Event
 from eventType import EventType
 
 
 def main():
-    # Parametres
-    ## TODO : Prendre depuis les arguments du programme OU depuis un fichier
-    c = 1
-    nbCategories = 6
+    # Paramètres
+    c = 1  # Nombre de groupes de serveurs
+    nbCategories = c  # Une catégorie par groupe
     _lambda = 1
     limiteTemps = 1000
+
     # Environnement
     nbServeurs = 12
     temps = 0
-    routeur = Routeur()
+    routeur = Routeur(capacite_file=100, nb_categories=nbCategories, c_param=c)
     echeancier = []
     requetes = []
     groupes = []
-    # TODO : Créer les groupes de serveurs
-    for groupeId in range(0, c):
+
+    # Création des groupes de serveurs
+    for groupeId in range(c):
         taux_service = calculTauxService(c)
-        g = ServerGroup(groupeId, nbServeurs / c, taux_service)
+        g = ServerGroup(groupeId, int(nbServeurs / c), taux_service)
         groupes.append(g)
-    # TODO : Spécialiser les groupes de serveurs selon les choix de l'utilisateur
-    # Ajouter une première requête
-    req = nouvelleRequete(nbCategories, _lambda, temps)
+
+    # Ajout d'une première requête
+    req = nouvelle_requete(nbCategories, _lambda, temps)
     echeancier.append(Event(EventType.Arrive, req.temps))
     requetes.append(req)
 
-    # Boucle de traitement des événements
-    while (simulationNonTerminee(temps)):
-        event: Event = echeancier.pop(0)
-        # On met à jour la date de la simulation
+    # Boucle de simulation
+    while simulationNonTerminee(temps, limiteTemps):
+        event = echeancier.pop(0)
         temps = event.temps
-        # TODO: On met à jour les groupes de serveurs
 
-        match (event.eventType):
+        # Mettre à jour les serveurs à chaque événement
+        for g in groupes:
+            g.mettre_a_jour_serveurs(temps)
+
+        match event.eventType:
             case EventType.Arrive:
-                # Gère l'arrivée d'une nouvelle requête
-                ## TODO: On ajoute la catégorie de la requête au routeur
+                # Récupère et traite la requête en attente
                 req = requetes.pop(0)
+                routeur.ajouter_requete(req, temps)
+                routeur.traiter(temps, groupes)
 
-                # Prépare l'envoi de la prochaine requête
-                req = nouvelleRequete(nbCategories, _lambda, temps)
+                # Génère une nouvelle requête
+                req = nouvelle_requete(nbCategories, _lambda, temps)
                 echeancier.append(Event(EventType.Arrive, req.temps))
-                break
-            case default:
-                break
+                requetes.append(req)
+            case _:
+                pass
 
 
-
-
-# Renvoie true si le temps de simulation a dépassé la limite, false sinon
 def simulationNonTerminee(temps, limiteTemps):
     return temps < limiteTemps
 
-# Renvoie le taux de service selon le nombre de groupe
+
 def calculTauxService(c):
     match c:
         case 1:
@@ -68,35 +69,9 @@ def calculTauxService(c):
             return 10 / 20
         case 6:
             return 14 / 20
-        case default:
-            raise Exception("C n'a pas une valeur valide. Sa valeur doit être 1, 2, 3 ou 6. Sa valeur actuelle est " + c)
-    
+        case _:
+            raise Exception(f"C invalide ({c}). Doit être 1, 2, 3 ou 6.")
 
-def tester_groupe_serveurs():
-    temps_actuel = 0.0
-    taux_service = 4 / 20  # Exemple : pour C = 1
-    groupe = ServerGroup(identifiant_groupe="A", nombre_serveurs=3, taux_service=taux_service)
-
-    print("=== Début de la simulation de test ===")
-    
-    # Simulation de 5 requêtes arrivant toutes les 2 unités de temps
-    for i in range(5):
-        print(f"\nRequête {i+1} arrivée au temps {temps_actuel:.1f}")
-        
-        # Met à jour l'état des serveurs avant d’assigner une nouvelle requête
-        groupe.mettre_a_jour_serveurs(temps_actuel)
-
-        if groupe.serveur_disponible():
-            duree = groupe.assigner_a_serveur_disponible(temps_actuel)
-            print(f"Reqete assignée. Duree de traitment : {duree:.2f}")
-        else:
-            print("Requête non assignée.")
-
-        # On avance le temps pour simuler l'arrivée progressive des requêtes
-        temps_actuel += 2.0
-
-    print("\n=== Fin du test ===")
 
 if __name__ == "__main__":
-    tester_nouvelle_requete(6, 1)
-    tester_groupe_serveurs()
+    main()
