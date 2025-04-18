@@ -3,8 +3,8 @@ from math import exp
 
 class Requete:
     def __init__(self, temps_arrivee, categorie):
-        self.temps = temps_arrivee      # Temps d'arrivée dans le système
-        self.categorie = categorie      # Catégorie de la requête (1 à nbCat)
+        self.temps = temps_arrivee
+        self.categorie = categorie
         self.temps_debut_traitement = None
         self.temps_fin_traitement = None
         self.perdue = False
@@ -27,9 +27,9 @@ class Requete:
         return self.temps_fin_traitement - self.temps
 
 def nouvelle_requete(nb_categories, _lambda, temps_actuel):
-    categorie = randint(1, nb_categories)  # Catégorie entre 1 et nb_categories
+    categorie = randint(1, nb_categories)
     x = random()
-    inter_arrivee = 1 / (_lambda / exp(-_lambda * x))  # Génère temps inter-arrivée
+    inter_arrivee = 1 / (_lambda / exp(-_lambda * x))
     temps_arrivee = temps_actuel + inter_arrivee
     return Requete(temps_arrivee, categorie)
 
@@ -39,7 +39,3 @@ def tester_nouvelle_requete(nb_categories, _lambda):
         requete = nouvelle_requete(nb_categories, _lambda, t)
         t = requete.temps
         print(f"Requête {i+1:02d} | Catégorie : {requete.categorie} | Temps d'arrivée : {requete.temps:.4f}")
-
-# Si tu l’exécutes directement : test automatique
-if __name__ == "__main__":
-    tester_nouvelle_requete(nb_categories=3, _lambda=1.2)
