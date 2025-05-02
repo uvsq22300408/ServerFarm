@@ -7,9 +7,9 @@ from eventType import EventType
 
 def main():
     # Paramètres
-    c = 6  # Nombre de groupes de serveurs
+    c = 2  # Nombre de groupes de serveurs
     nbCategories = c  # Une catégorie par groupe
-    _lambda = 1
+    _lambda = 0.2
     limiteTemps = 1000
     facteurAccélérationSpécialisé = 1.5
 
@@ -46,19 +46,23 @@ def main():
     sauvegarde_requetes.append(req)
 
     # Boucle de simulation. On s'arrete a limiteTemps ou lorsqu'on atteint 5% de pertes. 
-    while simulationNonTerminee(temps, limiteTemps) and calculTauxPerte(sauvegarde_requetes) < (1/20):
+    while simulationNonTerminee(temps, limiteTemps) and calculTauxPerte(sauvegarde_requetes) < 5:
         event = echeancier.pop(0)
         temps = event.temps
-        # Si le routeur doit être libéré avant le prochain événement on le libère,
-        # on remet ensuite l'autre evenement dans la file pour le traiter a l'iteration suivante.
+        print("temps = " + str(temps))
+        # Si le routeur doit être libéré avant le prochain événement on le libère.
         # Le routeur libéré doit maintenant envoyer la requête à un sevreur viable.
         # Si l'envoie échoue, le serveur reste bloqué
         if (not routeurLibre) and routeurDateLiberation < temps:
+            print("routeur libéré")
             routeurLibre = True
             routeurDisponibleEvent = None
             routeurDateLiberation = 0.0
-            routeur.envoieRequete(routeurDateLiberation)
-            echeancier.insert(0, event)
+            envoieRequeteEvent = routeur.envoieRequete(routeurDateLiberation)
+            if envoieRequeteEvent.eventType == EventType.RouteurBloqué:
+                print("Routeur Bloqué jusqu'à " + str(envoieRequeteEvent.fin))
+                routeurLibre = False
+                routeurDateLiberation = envoieRequeteEvent.fin
         
         # Mettre à jour les serveurs à chaque événement
         for g in groupes:
@@ -66,6 +70,7 @@ def main():
 
         match event.eventType:
             case EventType.Arrive:
+                print("arrivée requete: " + str(req.temps))
                 # Récupère et traite la requête en attente
                 req = requetes.pop(0)
                 isRequeteAjoutee = routeur.ajouter_requete(req, temps)
@@ -75,7 +80,8 @@ def main():
                         routeurDisponibleEvent = routeur.traiter(temps)
                         routeurLibre = False
                         routeurDateLiberation = routeurDisponibleEvent.temps
-
+                else:
+                    req.perdue = True
                 # Génère une nouvelle requête
                 req = nouvelle_requete(nbCategories, _lambda, temps)
                 echeancier.append(Event(EventType.Arrive, req.temps))
@@ -83,8 +89,14 @@ def main():
                 sauvegarde_requetes.append(req)
             case _:
                 pass
-    print("routeur taux de perte: " + str(calculTauxPerte(sauvegarde_requetes)))
+    print("routeur taux de perte: " + str(calculTauxPerte(sauvegarde_requetes)) + "%")
     print("routeur temps moyen de traitement: " + str(calculTempsMoyenTraitement(sauvegarde_requetes)))
+    print("routeur pourcentage de requêtes vues = " + str((routeur.requetes_recues / len(sauvegarde_requetes)) * 100) + "%")
+    print("routeur pourcentage de requêtes traitées parmi les requêtes reçues = " + str((routeur.requetes_traitees / routeur.requetes_recues) * 100) + "%")
+    print("     nb requêtes reçues par le routeur: " + str(routeur.requetes_recues))
+    print("     nb requêtes traitées par le routeur: " + str(routeur.requetes_traitees))
+    print("     nb requêtes perdues: " + str(routeur.requetes_perdues))
+    #logRequetes(sauvegarde_requetes)
 
 
 def simulationNonTerminee(temps, limiteTemps):
@@ -106,13 +118,16 @@ def calculTauxService(c):
 
 def calculTempsMoyenTraitement(sauvegarde_requetes):
     total = 0
+    nbTraitées = 0
     for r in sauvegarde_requetes:
         if r.perdue == False and r.temps_fin_traitement != None:
             if r.temps_fin_traitement > r.temps:
                 total += r.temps_fin_traitement - r.temps
-    print("     total = " + str(total))
-    print("     len(sauvegarde_requetes) = " + str(len(sauvegarde_requetes)))
-    return total / len(sauvegarde_requetes)
+                nbTraitées += 1
+    if nbTraitées == 0:
+        print("0 requêtes traitées")
+        return 0
+    return total / nbTraitées
 
 def calculTauxPerte(sauvegarde_requetes):
     total = 0
@@ -121,7 +136,12 @@ def calculTauxPerte(sauvegarde_requetes):
             total += 1
     print("     total = " + str(total))
     print("     len(sauvegarde_requetes) = " + str(len(sauvegarde_requetes)))
-    return total / len(sauvegarde_requetes)
+    return (total / len(sauvegarde_requetes)) * 100
+
+def logRequetes(sauvegarde_requetes):
+    for r in sauvegarde_requetes:
+        print(r.toString())
 
 if __name__ == "__main__":
+    #tester_nouvelle_requete(6, 1)
     main()

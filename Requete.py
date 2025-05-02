@@ -8,6 +8,7 @@ class Requete:
         self.temps_debut_traitement = None
         self.temps_fin_traitement = None
         self.perdue = False
+        self.transmiseRouteur = False
 
     def definir_debut_traitement(self, temps):
         self.temps_debut_traitement = temps
@@ -25,6 +26,13 @@ class Requete:
         if self.temps_fin_traitement is None:
             return None
         return self.temps_fin_traitement - self.temps
+    
+    def toString(self):
+        d = self.__dict__
+        s = ""
+        for do in self.__dict__:
+            s += (str(do) + ":" + str(d.get(do)) + "\n")
+        return s
 
 def nouvelle_requete(nb_categories, _lambda, temps_actuel):
     categorie = randint(1, nb_categories)
@@ -39,3 +47,4 @@ def tester_nouvelle_requete(nb_categories, _lambda):
         requete = nouvelle_requete(nb_categories, _lambda, t)
         t = requete.temps
         print(f"Requête {i+1:02d} | Catégorie : {requete.categorie} | Temps d'arrivée : {requete.temps:.4f}")
+

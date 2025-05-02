@@ -26,6 +26,7 @@ class Routeur:
         self.requetes_recues += 1
         if len(self.file) < self.capacite_max:
             self.file.append(requete)
+            requete.transmiseRouteur = True
             return True
         else:
             requete.marquer_comme_perdue()
@@ -38,6 +39,7 @@ class Routeur:
             self.requete_en_cours = self.file.popleft()
             self.requete_en_cours.definir_debut_traitement(temps_actuel)
             self.temps_disponible = temps_actuel + self.temps_traitement
+            self.requetes_traitees += 1
         return Event(EventType.RouteurDisponible, self.temps_disponible)
 
     # Envoie la requete au groupe approprie si possible
@@ -59,6 +61,8 @@ class Routeur:
         else:
             fin_traitement = serveur.assigner_requete(tempsActuel, groupe.taux_service)
         req.temps_fin_traitement = fin_traitement
+        # Le routeur n'est plus en train de traiter une requête
+        self.requete_en_cours = None
         return self.routeurEnvoieSuccès(tempsActuel)
 
     def taux_perte(self):
@@ -92,6 +96,9 @@ class Routeur:
             for s in g.serveurs:
                 if s.occupe and (mini == None or s.fin_traitement < mini):
                     mini = s.fin_traitement
+        if mini == None:
+            print("Le routeur est bloqué mais aucun serveur n'est occupé. La catégorie de la requête n'est donc pas acceptable par le routeur.")
+            exit()
         return Event(eventType=EventType.RouteurBloqué, temps=tempsActuel, fin=mini)
     
     # Renvoie un événement routeurEnvoieSuccès
