@@ -1,62 +1,98 @@
-# ServerFarm
-
-# Projet Python – Simulation d’une Ferme de Serveurs Spécialisés
-
-## Description du Projet
-
-Ce projet consiste à simuler une ferme de 12 serveurs spécialisés dans le traitement de requêtes. Le but est de déterminer la configuration optimale (valeur de `C`) pour différents taux d’arrivée (`λ`) afin de **minimiser le temps de réponse** et **limiter le taux de perte** des requêtes à **moins de 5%**.
+# Projet de Simulation – Ferme de serveurs
+**Année universitaire : 2024-2025**  
+**Auteurs : SOUMET Quentin Theotime TURNEL**
 
 ---
 
-## Objectifs
+## Objectif du projet
 
-- Simuler le système de serveurs avec différents regroupements `C ∈ {1, 2, 3, 6}`.
-- Étudier l’influence de `λ` (paramètre de la loi exponentielle des arrivées).
-- Calculer :
-  - Le **temps de réponse moyen**.
-  - Le **taux de perte** des requêtes.
-- Déterminer le **C optimal** pour chaque valeur de `λ` (avec IC 95%).
-
----
-
-## Modèle à Simuler
-
-- **12 serveurs** regroupés en `C` groupes de `K` serveurs (K = 12 / C).
-- **Routeur** :
-  - Classe les requêtes et les dirige vers le bon groupe.
-  - File FIFO de capacité 100 (perte si pleine).
-  - Temps de traitement constant : `T_routeur = (C-1)/C`.
-- **Serveurs spécialisés** :
-  - Sans file d’attente.
-  - Temps de service ~ loi exponentielle, paramètre dépendant de `C` :
-    - C = 1 → μ = 4/20
-    - C = 2 → μ = 7/20
-    - C = 3 → μ = 10/20
-    - C = 6 → μ = 14/20
-- **Arrivées** :
-  - Loi exponentielle de paramètre `λ`.
-  - Catégorie tirée uniformément.
+Ce projet a pour but de simuler le fonctionnement d'une ferme de 12 serveurs pouvant être regroupés en C catégories spécialisées afin d'optimiser le **temps de réponse** et **réduire les pertes** de requêtes.  
+Il s'agit de tester différentes valeurs de **C ∈ {1, 2, 3, 6}**, ainsi que plusieurs **valeurs de λ (taux d'arrivée des requêtes)**, pour observer leur influence sur :
+- Le **temps moyen de réponse**.
+- Le **taux de perte** (objectif : < 5%).
+- Le choix **optimal** de regroupement des serveurs selon les conditions.
 
 ---
 
-## Plan de Travail
+## Structure du projet
 
-### 1. Modélisation
-- Définir les lois de probabilité utilisées.
-- Identifier les événements à simuler (arrivée, traitement routeur, traitement serveur, perte).
+### `eventType.py`
+Ce fichier définit les différents **types d’événements** possibles dans la simulation à l’aide d’une énumération (`Enum`) :
+- `Arrive` : arrivée d’une nouvelle requête.
+- `RouteurDisponible` : le routeur est prêt à traiter une nouvelle requête.
+- `RouteurEnvoieSucces` : la requête est transmise avec succès à un serveur.
+- `RouteurBloqué` : le routeur est bloqué faute de serveur disponible.
 
-### 2. Simulation (par événements discrets)
-- Générer les requêtes selon `λ`.
-- Gérer la file du routeur.
-- Traiter les requêtes via le routeur puis les serveurs spécialisés.
-- Collecter les métriques : temps de réponse, pertes, attente.
+---
 
-### 3. Analyse des Résultats
-- Courbes :  
-  - Temps de réponse moyen (y) vs λ (x), pour chaque `C`.  
-  - Taux de perte (y) vs λ (x), pour chaque `C`.
-- Ajouter les **intervalles de confiance à 95%**.
-- Déterminer les `λ` maximaux pour lesquels perte ≤ 5%.
-- Choix optimal de `C` pour un `λ` donné (ex: λ = 1).
+### `Event.py`
+Définit la classe `Event` représentant un événement dans l’échéancier de la simulation.
+- `eventType` : type d’événement.
+- `temps` : temps d’occurrence de l’événement.
+- `fin` (optionnel) : temps de fin (utile pour le cas de blocage du routeur).
+
+---
+
+### `Requete.py`
+Gère la classe `Requete`, qui représente une requête réseau :
+- Attributs : temps d’arrivée, catégorie, temps de traitement, état (perdue, terminée).
+- Méthodes pour définir les temps de début et fin, marquer une requête comme perdue, etc.
+
+Contient aussi la fonction `nouvelle_requete()` pour générer de nouvelles requêtes à intervalles exponentiels (corrigée selon la loi).
+
+---
+
+### `Routeur.py`
+Contient la classe `Routeur`, cœur de la simulation :
+- Gère la file d’attente (taille max 100).
+- Oriente les requêtes vers les groupes de serveurs spécialisés ou non.
+- Traite les requêtes selon un temps fixe dépendant de C.
+- Calcule les **événements de blocage**, de succès, et le **taux de perte**.
+
+---
+
+### `Server.py`
+Classe `Server`, représentant un serveur individuel :
+- Peut être **occupé** ou **libre**.
+- Génère un **temps de traitement** selon une loi exponentielle.
+- Méthodes pour attribuer une requête, libérer le serveur, etc.
+
+---
+
+### `ServerGroup.py`
+Classe `ServerGroup`, représentant un groupe de serveurs (spécialisé ou non) :
+- Contient un ensemble de `Server`.
+- Gère les taux de service (spécialisé ou non).
+- Attribue les requêtes aux serveurs disponibles.
+
+---
+
+## `main.py` – Détail complet de la simulation
+
+Ce fichier orchestre la **simulation événementielle** :
+1. **Paramètres initiaux** :
+   - `C` : nombre de groupes.
+   - `λ` : taux d'arrivée des requêtes.
+   - `facteurAccélérationSpécialisé` : accélération des serveurs spécialisés.
+   - `limiteTemps` : durée maximale de simulation.
+
+2. **Initialisation** :
+   - Création du `Routeur`.
+   - Construction des groupes de serveurs avec `ServerGroup`.
+   - Définition des spécialités de chaque groupe.
+   - Insertion de la première requête dans l’échéancier.
+
+3. **Boucle de simulation** :
+   - Tant que le temps n’a pas dépassé `limiteTemps` **et** que le taux de perte est < 5% :
+     - Extraction du prochain événement (`echeancier.pop(0)`).
+     - Traitement selon le type d’événement :
+       - **Arrivée de requête** : tentative d’ajout dans la file du routeur. Si succès, lancement du traitement.
+       - **Fin de traitement du routeur** : tentative d’envoi au serveur via le bon groupe. Sinon, le routeur est bloqué.
+     - Mise à jour de tous les serveurs.
+
+4. **Statistiques en fin de simulation** :
+   - Taux de perte des requêtes.
+   - Temps moyen de réponse.
+   - Pourcentage de requêtes traitées.
 
 ---
