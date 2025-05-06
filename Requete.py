@@ -46,5 +46,5 @@ def tester_nouvelle_requete(nb_categories, _lambda):
     for i in range(50):
         requete = nouvelle_requete(nb_categories, _lambda, t)
         t = requete.temps
-        print(f"Requête {i+1:02d} | Catégorie : {requete.categorie} | Temps d'arrivée : {requete.temps:.4f}")
+        #print(f"Requête {i+1:02d} | Catégorie : {requete.categorie} | Temps d'arrivée : {requete.temps:.4f}")
 

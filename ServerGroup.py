@@ -1,12 +1,12 @@
 from Server import Server
 
 class ServerGroup:
-    def __init__(self, identifiant_groupe, nombre_serveurs, taux_service, spécialisé=False, 
+    def __init__(self, identifiant_groupe, nombre_serveurs, taux_service, spécialisé=True, 
                     taux_serviceSpécialisé=0):
         self.identifiant_groupe = identifiant_groupe
         self.serveurs = [Server(f"{identifiant_groupe}-{i}") for i in range(nombre_serveurs)]
         self.taux_service = taux_service
-        self.taux_serviceSpécialisé = taux_serviceSpécialisé
+        self.taux_serviceSpécialisé = taux_service
         self.spécialisé = spécialisé
 
     def serveur_disponible(self):

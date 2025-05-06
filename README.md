@@ -1,6 +1,6 @@
 # Projet de Simulation – Ferme de serveurs
 **Année universitaire : 2024-2025**  
-**Auteurs : SOUMET Quentin Theotime TURNEL**
+**Auteurs : SOUMET Quentin Theotime TURMEL**
 
 ---
 
@@ -94,5 +94,15 @@ Ce fichier orchestre la **simulation événementielle** :
    - Taux de perte des requêtes.
    - Temps moyen de réponse.
    - Pourcentage de requêtes traitées.
+
+---
+
+## Usage
+
+A la fin du fichier main se trouvent 4 variables booléennes question1,...,question4.
+
+Par défaut ces variables ont la valeur True et le programme, lorsque exécuté, va fournir les graphes
+utilisés pour répondre aux questions du sujet.
+On peut mettre chacune de ces variables à False pour passer l'exécution de la question liée à la variable.
 
 ---
